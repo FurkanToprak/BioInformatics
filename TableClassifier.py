@@ -9,28 +9,38 @@ def write_down(l):
         ret += a.lstrip() + "\n"
     return ret
 
-
-with open("OM_bugs.csv", "r", encoding='utf-8-sig') as bugs:
-    bugs = bugs.read()
-    bugs = bugs.split("\n")
-    for i in range(0, len(bugs)):
-        bugs[i] = ''.join(x for x in bugs[i] if x.isalpha())
-    for i in reversed(range(0, len(bugs))):
-        if bugs[i] == "":
-            del bugs[i]
-    with open('ncbi_phages.tsv', 'r') as bact:
-        bact = bact.read().split("\n")
-        pos_genus = []
-        neg_genus = []
-        for i in range(2, len(bact)):
-            bact_genus = bact[i].split("\t")[0].split(" ")[0]
-            if bact_genus in bugs:
-                neg_genus.append(bact[i].split("\t")[0])
-            else:
-                pos_genus.append(bact[i].split("\t")[0])
-        output = open("sorted_table.txt", "w")
-        output.write("Gram +:\n\n")
-        output.write(write_down(pos_genus))
-        output.write("\n\n\nGram -:\n\n")
-        output.write(write_down(neg_genus))
-        output.close()
+data_file = open("Gram_stains.txt", "r")
+data = data_file.read().split("\n")
+pos_genus = data[data.index("Gram + Genera:") + 1: data.index("Gram + Species:")]
+pos_species = data[data.index("Gram + Species:") + 1: data.index("Gram - Genera:")]
+neg_genus = data[data.index("Gram - Genera:") + 1: data.index("Gram - Species:")]
+neg_species = data[data.index("Gram - Species:") + 1:]
+data_file.close()
+pos_include_file = open("include_positive.txt", "r")
+pos_include = pos_include_file.read().split("\n")
+pos_include_file.close()
+neg_include_file = open("include_negative.txt", "r")
+neg_include = neg_include_file.read().split("\n")
+neg_include_file.close()
+phages_file = open("ncbi_phages.tsv", "r")
+phage = phages_file.read().split("\n")[2:]
+pos_bugs = []
+neg_bugs = []
+unknown_bugs = []
+for i in phage:
+    if i.split("\t")[0].split(" ")[0] in pos_genus or i.split("\t")[0].split(" ")[0] in pos_species or\
+            i.split("\t")[0] in pos_include or i.split("\t")[0].split(" ")[0] in pos_include:
+        pos_bugs.append(i.split("\t")[0])
+    elif i.split("\t")[0].split(" ")[0] in neg_genus or i.split("\t")[0].split(" ")[0] in neg_species or\
+            i.split("\t")[0] in neg_include or i.split("\t")[0].split(" ")[0] in neg_include:
+        neg_bugs.append(i.split("\t")[0])
+    else: unknown_bugs.append(i.split("\t")[0])
+phages_file.close()
+output_file = open("sorted_table.txt", "w")
+output_file.write("Unknown:\n")
+output_file.write(write_down(unknown_bugs))
+output_file.write("\nGram +:\n")
+output_file.write(write_down(pos_bugs))
+output_file.write("\nGram -:\n")
+output_file.write(write_down(neg_bugs))
+output_file.close()
